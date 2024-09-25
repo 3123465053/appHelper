@@ -1,5 +1,8 @@
 import { router } from '@kit.ArkUI'
 import { LOGIN_INFO, LoginInfoResponse } from '../../common/constants'
+import { batteryInfo, deviceInfo } from '@kit.BasicServicesKit'
+import { hidebug } from '@kit.PerformanceAnalysisKit'
+import { statfs } from '@kit.CoreFileKit'
 
 interface UsageItem {
   icon: Resource
@@ -14,12 +17,57 @@ export struct MyTabsComp {
   @StorageLink(LOGIN_INFO) loginInfo: LoginInfoResponse = {}
   @StorageLink('topHeight') topHeight: number = 0
   // @Provide 装饰器和 @Consume 装饰器：与后代组件双向同步
-  @Consume currentIndex: number
+  @Consume @Watch('onTabChange') currentIndex: number
+  @Consume @Watch('onTabChange') isPageShow:boolean;
+
   @State deviceName: string = ''
   @State batteryState: number = 0
   @State memorySize: number = 0
   @State cpuUsage: number = 0
   @State statfsFreeSize: number = 0
+
+
+  aboutToAppear(): void {
+  this.getDeviceInfo();
+  this.getDebugInfo();
+  this.getStatfsFreeInfo();
+  this.getBatterInfo()
+  }
+
+  //监听下标和父页面的显示 当下标改变时更新下信息
+  onTabChange(){
+    if(this.currentIndex==2&&this.isPageShow){
+      this.getDebugInfo();
+      this.getStatfsFreeInfo();
+      this.getBatterInfo()
+    }
+  }
+  //获取设备信息
+  getDeviceInfo(){
+    this.deviceName=deviceInfo.marketName
+  }
+
+  //获取cpu使用情况以及内存使用率
+  getDebugInfo(){
+    this.cpuUsage=hidebug.getCpuUsage();
+
+    //获取内存使用情况 单位为KB
+    // window 1MB=1024KB
+    //mac 手机 linux 1MB=1000KB
+    this.memorySize=Number(hidebug.getPss())/1000
+  }
+
+
+  //磁盘剩余空间
+  getStatfsFreeInfo(){
+    //获取磁盘剩余空间 返回单位为Byte
+    this.statfsFreeSize=statfs.getFreeSizeSync(getContext().filesDir)/(1000*1000*1000)
+  }
+
+  //获取电池信息
+  getBatterInfo(){
+    this.batteryState=batteryInfo.batterySOC
+  }
 
   // 标题行
   @Builder
@@ -161,7 +209,7 @@ export struct MyTabsComp {
               this.UsageColumn({
                 icon: $r('app.media.ic_my_storage'),
                 name: '剩余存储',
-                value: this.statfsFreeSize.toFixed(0),
+                value: this.statfsFreeSize.toFixed(1),
                 unit: 'GB'
               })
             }

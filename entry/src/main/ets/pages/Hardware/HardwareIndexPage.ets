@@ -1,6 +1,7 @@
 import { NavigationTitleBuilder } from '../../common/builders';
 import { SENSOR_NAME_LIST, SensorName } from '../../common/constants';
 import { themeManager } from '../../manager';
+import { deviceInfo } from '@kit.BasicServicesKit';
 
 @Entry
 @Component
@@ -39,6 +40,23 @@ struct HardwareIndexPage {
 
   onPageHide() {
     themeManager.settingStatusBarBlack()
+  }
+
+  aboutToAppear(): void {
+  this.getDeviceInfo()
+  }
+
+
+  //获取设备信息
+  getDeviceInfo(){
+    //产品名称
+    this.marketName=deviceInfo.marketName
+    //系统版本
+    this.osFullName=deviceInfo.osFullName
+    //sdk b版本
+    this.sdkApiVersion=deviceInfo.sdkApiVersion.toString()
+    //设备类型
+    this.deviceType=deviceInfo.deviceType
   }
 
   @Builder
