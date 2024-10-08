@@ -2,6 +2,14 @@ import { NavigationTitleBuilder } from '../../common/builders';
 import { SENSOR_NAME_LIST, SensorName } from '../../common/constants';
 import { themeManager } from '../../manager';
 import { deviceInfo } from '@kit.BasicServicesKit';
+import process from '@ohos.process';
+import dayjs from 'dayjs';
+import duration from  'dayjs/plugin/duration'
+import connection from '@ohos.net.connection';
+import { display } from '@kit.ArkUI';
+import { sensor } from '@kit.SensorServiceKit';
+
+dayjs.extend(duration)
 
 @Entry
 @Component
@@ -43,7 +51,11 @@ struct HardwareIndexPage {
   }
 
   aboutToAppear(): void {
-  this.getDeviceInfo()
+  this.getDeviceInfo();
+  this.getProcessInfo();
+  this.getConnectionInfo();
+  this.getDisplayInfo();
+  this.getSensorInfo();
   }
 
 
@@ -57,6 +69,82 @@ struct HardwareIndexPage {
     this.sdkApiVersion=deviceInfo.sdkApiVersion.toString()
     //设备类型
     this.deviceType=deviceInfo.deviceType
+  }
+
+  //获取进程相关的信息
+  getProcessInfo(){
+    //当前系统以运行的秒数
+    this.uptime=process.uptime()
+  }
+
+  //获取网络信息
+  getConnectionInfo(){
+    //获取检查默认数据网络是否被激活
+    const  isHasDefaultNet=connection.hasDefaultNetSync()
+    // this.netBearType=isHasDefaultNet?"有网络":"无网络 "
+    if(isHasDefaultNet){
+      this.getNetBearType()
+      this.getNetProperties()
+    }
+    else {
+      this.netBearType="无网络"
+    }
+  }
+
+  //获取网络类型（以太网、wifi、蜂窝）
+  getNetBearType(){
+    //获取默认激活对网络数据
+    const netHandle = connection.getDefaultNetSync()
+    //获取网络的连接信息
+    const netCapabilities= connection.getNetCapabilitiesSync(netHandle)
+
+    //以太网优先
+    if(netCapabilities.bearerTypes.includes(connection.NetBearType.BEARER_ETHERNET)){
+      this.netBearType="以太网络"
+    }else if(netCapabilities.bearerTypes.includes(connection.NetBearType.BEARER_WIFI))
+    {
+      this.netBearType="Wi-Fi网络"
+    }else if(netCapabilities.bearerTypes.includes(connection.NetBearType.BEARER_CELLULAR))
+    {
+      this.netBearType="蜂窝网络"
+    }else {
+      this.netBearType="未知网络"
+    }
+  }
+
+  //获取网络连接信息
+  getNetProperties(){
+    //获取默认激活对网络数据
+    const netHandle = connection.getDefaultNetSync()
+    //获取网络连接信息
+    const connectionProperties= connection.getConnectionPropertiesSync(netHandle)
+    //3.提取链路信息
+    const linkAddress=connectionProperties.linkAddresses[0]
+    if(linkAddress){
+      //获取ip地址
+      this.IPAddress=linkAddress.address.address
+    }
+  }
+
+  //获取屏幕信息
+  getDisplayInfo(){
+    const defaultDisplay=display.getDefaultDisplaySync();
+    //分辨率
+    this.displayWidth=defaultDisplay.width;
+    this.displayHeight=defaultDisplay.height;
+    //屏幕刷新
+    this.displayRefreshRate=defaultDisplay.refreshRate;
+    //像素密度
+    this.displayDensityDPI=defaultDisplay.densityDPI
+  }
+
+  //获取传感器信息
+    getSensorInfo(){
+    //获取当前设备所有支持的传感器信息
+    const list = sensor.getSensorListSync();
+
+    //提取出ID
+    this.supportSensorIds=list.map(item=>item.sensorId)
   }
 
   @Builder
@@ -108,8 +196,8 @@ struct HardwareIndexPage {
       Column() {
         List() {
           ListItemGroup({ header: this.ListTitle('基本信息') }) {
-            ListRow({ title: '上次启动', value: String(this.uptime) })
-            ListRow({ title: '运行时间', value: String(this.uptime) })
+            ListRow({ title: '上次启动', value: dayjs().subtract(this.uptime,"second").format('YYYY-MM-DD HH:mm:ss') })
+            ListRow({ title: '运行时间', value: dayjs.duration(this.uptime,'second').format('D天H小时mm分ss秒')})
           }
 
           ListItemGroup({ header: this.ListTitle('网络信息') }) {

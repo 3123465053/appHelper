@@ -3,7 +3,7 @@ export interface SensorName {
   sensorName: string
 }
 
-// 传感器名称
+// 传感器名称 (id对应的中文名称 开发文档里)
 export const SENSOR_NAME_LIST: SensorName[] = [
   {
     "sensorId": 1,

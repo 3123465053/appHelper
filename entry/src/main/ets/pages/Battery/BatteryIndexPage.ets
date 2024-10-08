@@ -1,5 +1,6 @@
 import { NavigationTitleBuilder } from '../../common/builders'
 import { themeManager } from '../../manager'
+import { batteryInfo } from '@kit.BasicServicesKit'
 
 @Entry
 @Component
@@ -15,10 +16,21 @@ struct BatteryIndexPage {
 
   onPageShow() {
     themeManager.settingStatusBarWhite()
+    this.getBatterInfo()
   }
 
   onPageHide() {
     themeManager.settingStatusBarBlack()
+  }
+
+  //获取电池信息
+  getBatterInfo(){
+    this.batterySOC=batteryInfo.batterySOC
+    //向下取整
+    this.remainingHours=Math.floor(this.batterySOC*this.consumptionRate)
+    //四舍五入
+    this.remainingMinutes=Math.round((this.batterySOC*this.consumptionRate-this.remainingHours)*60)
+
   }
 
   // TODO：计算剩余可用时间（剩余电量乘以消耗速率）
