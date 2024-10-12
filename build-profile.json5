@@ -1,17 +1,18 @@
 {
   "app": {
+    //签名
     "signingConfigs": [
       {
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/yangbang/.ohos/config/default_hm_guardian_gH_fLiCOZYHsxybWW3XyKYQrjmv8DMXyzb-9B4FjxN0=.cer",
-          "storePassword": "0000001B13E98F3DA98A507AECFDD14C8DFBB9AC7A33C83B52C6211DB90A0DC0311193B9710B157E7FE07B",
+          "certpath": "/Users/yangbang/.ohos/config/default_app_helper_90dn-RMDMOerA0btuG8afuDLPg1bUFOu-fEUOrw-_S0=.cer",
+          "storePassword": "0000001A750BDE56A18C8A52DA907F5D53E13608447257C3598CCC4226530CFD77D4398983DF0FCF0454",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BA232B0BCD850054A73C1005BBA47E16D1D07D2D06DA42D0A7E67534C71F4DD427ACD02C5E55F5A",
-          "profile": "/Users/yangbang/.ohos/config/default_hm_guardian_gH_fLiCOZYHsxybWW3XyKYQrjmv8DMXyzb-9B4FjxN0=.p7b",
+          "keyPassword": "0000001A1145E36A7EEA4524AEDA413A60D1012DDFF63AE123EF5DE040B120EB0EDEF86178A4CD199E07",
+          "profile": "/Users/yangbang/.ohos/config/default_app_helper_90dn-RMDMOerA0btuG8afuDLPg1bUFOu-fEUOrw-_S0=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/yangbang/.ohos/config/default_hm_guardian_gH_fLiCOZYHsxybWW3XyKYQrjmv8DMXyzb-9B4FjxN0=.p12"
+          "storeFile": "/Users/yangbang/.ohos/config/default_app_helper_90dn-RMDMOerA0btuG8afuDLPg1bUFOu-fEUOrw-_S0=.p12"
         }
       }
     ],

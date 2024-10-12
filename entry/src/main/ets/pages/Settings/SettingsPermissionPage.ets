@@ -1,6 +1,7 @@
 import { Permissions } from '@kit.AbilityKit';
 import { NavigationTitleBuilder } from '../../common/builders';
-import { themeManager } from '../../manager';
+import { permissionManger, themeManager } from '../../manager';
+import promptAction from '@ohos.promptAction';
 
 interface PermissionItem {
   name: string
@@ -70,12 +71,68 @@ struct SettingsPermissionPage {
 
   onPageShow() {
     themeManager.settingStatusBarWhite()
+    this.updatePermission();
   }
 
   onPageHide() {
     themeManager.settingStatusBarBlack()
   }
 
+  //权限申请
+  async requestPermission(item:PermissionItem){
+    //之前加的异常
+    try {
+      await permissionManger.requestPermissions(item.permissions)
+    } catch (e) {
+      promptAction.showDialog({
+        alignment:DialogAlignment.Center,
+        title:"温馨提示",
+        message:item.desc,
+        buttons:[
+          {text:"取消",color:"#89939c"},
+          {text:"去设置",color:"#0A59F7"}
+        ]
+      }).then((res)=>{
+        //点击了去设置
+        if(res.index==1){
+          permissionManger.openPermissionSettingsPage()
+        }
+      })
+    }
+    this.updatePermission();
+  }
+
+  //更新权限列表
+  updatePermission(){
+    this.permissionList=this.permissionList.map<PermissionItem>((item)=>{
+      return {
+        name:item.name,
+        title:item.title,
+        permissions:item.permissions,
+        desc:item.desc,
+        timeStamp:Date.now()    //通过每次改变时间戳 每次刷新权限列表
+      }
+    })
+  }
+
+  //关闭权限
+  closePermission(){
+  promptAction.showDialog({
+    alignment:DialogAlignment.Center,
+    title:"温馨提示",
+    message:"关闭权限会影响应用正常运行，您确定要关闭吗?",
+    buttons:[
+      {text:"取消",color:$r('app.color.brand')},
+      {text:"狠心关闭",color:$r('app.color.font_sub')}
+    ]
+  })
+    .then((res)=>{
+      //用户点击了关闭跳到设置页
+      if(res.index==1){
+        permissionManger.openPermissionSettingsPage()
+      }
+    })
+  }
   build() {
     Navigation() {
       Row() {
@@ -101,30 +158,41 @@ struct SettingsPermissionPage {
             }
             .alignItems(HorizontalAlign.Start)
 
-            // TODO: 检测权限是否开启
-            if (item.name === 'notification') {
-              if (false) {
-                Text('已开启')
-                  .fontSize(14)
-                  .fontColor($r('app.color.brand'))
-              } else {
-                Toggle({ type: ToggleType.Switch, isOn: false })
-                  .onChange(async () => {
-                    // TODO：点击申请 notification 权限
-                  })
-              }
+            if (permissionManger.checkPermissions(item.permissions)) {
+              Text('已开启')
+                .fontSize(14)
+                .fontColor($r('app.color.brand'))
             } else {
-              if (false) {
-                Text('已开启')
-                  .fontSize(14)
-                  .fontColor($r('app.color.brand'))
-              } else {
-                Toggle({ type: ToggleType.Switch, isOn: false })
-                  .onChange(async () => {
-                    // TODO：点击申请 user_grant 授权
-                  })
-              }
+              Toggle({ type: ToggleType.Switch, isOn: false })
+                .onChange(async () => {
+                  // TODO：点击申请 user_grant 授权
+                   this.requestPermission(item)
+                })
             }
+            // TODO: 检测权限是否开启
+            // if (item.name === 'notification') {
+            //   if (false) {
+            //     Text('已开启')
+            //       .fontSize(14)
+            //       .fontColor($r('app.color.brand'))
+            //   } else {
+            //     Toggle({ type: ToggleType.Switch, isOn: false })
+            //       .onChange(async () => {
+            //         // TODO：点击申请 notification 权限
+            //       })
+            //   }
+            // } else {
+            //   if (false) {
+            //     Text('已开启')
+            //       .fontSize(14)
+            //       .fontColor($r('app.color.brand'))
+            //   } else {
+            //     Toggle({ type: ToggleType.Switch, isOn: false })
+            //       .onChange(async () => {
+            //         // TODO：点击申请 user_grant 授权
+            //       })
+            //   }
+            // }
           }
           .width('100%')
           .height(64)
@@ -136,6 +204,7 @@ struct SettingsPermissionPage {
           .margin({ top: 20 })
           .onClick(() => {
             // TODO: 关闭权限，弹窗提示，关闭权限需到设置页关闭
+            this.closePermission()
           })
       }
       .width('100%')

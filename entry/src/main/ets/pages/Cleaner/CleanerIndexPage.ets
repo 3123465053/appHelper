@@ -1,9 +1,9 @@
-import { router } from '@kit.ArkUI'
+import { PromptAction, router } from '@kit.ArkUI'
 import { statfs } from '@kit.CoreFileKit'
 import { photoAccessHelper } from '@kit.MediaLibraryKit'
 import { NavigationTitleBuilder } from '../../common/builders'
 import { formatByteLength, GIGA_BYTE } from '../../common/utils'
-import { themeManager } from '../../manager'
+import { cleanerManger, themeManager } from '../../manager'
 
 interface ClearItem {
   icon: ResourceStr
@@ -12,6 +12,7 @@ interface ClearItem {
   size: number
 }
 
+//手机瘦身
 @Entry
 @Component
 struct CleanerScanResultPage {
@@ -35,8 +36,12 @@ struct CleanerScanResultPage {
     },// 1
   ]
 
+  // aboutToAppear(): void {
+  // cleanerManger.requestPermissions()
+  // }
   onPageShow() {
     themeManager.settingStatusBarWhite()
+    this.getScreenshotList()
   }
 
   onPageHide() {
@@ -49,6 +54,17 @@ struct CleanerScanResultPage {
     // 字节数转GB
     this.freeSize = statfs.getFreeSizeSync(context.filesDir)
     this.totalSize = statfs.getTotalSizeSync(context.filesDir)
+  }
+
+  async getScreenshotList(){
+    const list=await cleanerManger.getScreenshotList()
+    console.log("AppInfo",JSON.stringify(list))
+    this.list[0]={
+      icon: $r('app.media.ic_clean_pmjt'),
+      name: '屏幕截图',
+      list: list,
+      size: 0
+    }
   }
 
   build() {
