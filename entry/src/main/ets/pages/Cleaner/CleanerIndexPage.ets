@@ -39,8 +39,12 @@ struct CleanerScanResultPage {
   // aboutToAppear(): void {
   // cleanerManger.requestPermissions()
   // }
+
   onPageShow() {
     themeManager.settingStatusBarWhite()
+    //获取剩余空间
+    this.getStatfsSize()
+    //获取屏幕截屏
     this.getScreenshotList()
   }
 
@@ -56,14 +60,20 @@ struct CleanerScanResultPage {
     this.totalSize = statfs.getTotalSizeSync(context.filesDir)
   }
 
+  //获取截屏
   async getScreenshotList(){
     const list=await cleanerManger.getScreenshotList()
-    console.log("AppInfo",JSON.stringify(list))
+    let totalSize=0;
+      list.forEach(item=>{
+      const size=item.get(photoAccessHelper.PhotoKeys.SIZE) as number
+      totalSize+=size
+    })
+
     this.list[0]={
       icon: $r('app.media.ic_clean_pmjt'),
       name: '屏幕截图',
       list: list,
-      size: 0
+      size: totalSize
     }
   }
 

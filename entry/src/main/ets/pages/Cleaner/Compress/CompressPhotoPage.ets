@@ -1,7 +1,8 @@
 import { photoAccessHelper } from '@kit.MediaLibraryKit'
 import { NavigationTitleBuilder } from '../../../common/builders'
 import { formatByteLength } from '../../../common/utils'
-import { themeManager } from '../../../manager'
+import { cleanerManger, themeManager } from '../../../manager'
+import { promptAction } from '@kit.ArkUI'
 
 @Entry
 @Component
@@ -12,10 +13,33 @@ struct CompressPhotoIndexPage {
 
   onPageShow() {
     themeManager.settingStatusBarWhite()
+    this.getList()
   }
 
   onPageHide() {
     themeManager.settingStatusBarBlack()
+  }
+
+  //获取大尺寸图片
+  async getList(){
+    this.list=await cleanerManger.getLargeSizeList();
+  }
+
+  //开始压缩图片
+  async  startCompress(){
+
+    //生成任务列表 forEach不会真正等待
+    const promiseList=this.selectedUris.map( async (item)=>{
+     return await cleanerManger.compressImage(item)
+    })
+    //等待所有任务执行完成才进行下一步
+    await Promise.all(promiseList)
+
+    promptAction.showToast({message:this.selectedUris.length+"张图片压缩成功"})
+    //删除原图
+    await cleanerManger.deletePhotos(this.selectedUris)
+    //重新获取列表 刷新
+    this.getList()
   }
 
   // TODO：立即瘦身（压缩照片）
@@ -71,7 +95,7 @@ struct CompressPhotoIndexPage {
                           .borderRadius(6)
                           .clip(true)
                         }
-                      })
+                      },(item:photoAccessHelper.PhotoAsset)=>item.uri)
                     }
                   }
 
@@ -114,6 +138,7 @@ struct CompressPhotoIndexPage {
             .enabled(this.selectedUris.length > 0)
             .onClick(() => {
               // TODO：立即瘦身（压缩照片）
+              this.startCompress()
             })
         }
         .width('100%')
