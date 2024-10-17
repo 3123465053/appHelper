@@ -1,4 +1,7 @@
 import { PRIVACY_SETTINGS, PrivacySettings } from '../../../common/constants'
+import promptAction from '@ohos.promptAction'
+import router from '@ohos.router'
+import { encryptMD5 } from '../../../common/utils/encryptMD5'
 
 interface RouterParams {
   isForgetPassword?: boolean
@@ -21,6 +24,39 @@ struct AuthPatternLockSettingsPage {
   private timeoutID: number = -1
   // 控制器
   private patternLockController: PatternLockController = new PatternLockController()
+
+  //输入完成时调用
+  onPatternComplete(input:number[]){
+    this.inputPassword=input    //赋值
+    // TODO：密码输入结束时触发该回调 500毫秒自动重置
+    if(input.length<4){
+      this.errorMessage="输入错误，至少连接4个点"
+      this.patternLockController.setChallengeResult(PatternLockChallengeResult.WRONG)
+    }else{
+      //输入正确时要清除之前的错误提示
+      this.errorMessage="";
+      this.patternLockController.setChallengeResult(PatternLockChallengeResult.CORRECT)
+      //第一次输入时要暂时存储下
+      if(this.firstPassword.length===0){
+        this.firstPassword=input
+      }else {
+        //没法直接比较列表 []===[]比较的是地址 转成字符串比较
+        if(this.firstPassword.toString()===input.toString()){
+         // promptAction.showToast({message:"两次密码相同"})
+          this.privacySettings.patternPassword=encryptMD5(input.toString())   //存储时加密
+          //页面跳转
+          router.pushUrl({url:"pages/Privacy/PrivacyIndexPage"})
+        }else{
+          this.errorMessage="两次输入的密码不一致";
+          this.patternLockController.setChallengeResult(PatternLockChallengeResult.WRONG);
+        }
+      }
+    }
+    this.timeoutID=setTimeout(()=>{
+      this.patternLockController.reset()
+      this.inputPassword=[]
+    },700)
+  }
 
   build() {
     Navigation() {
@@ -58,7 +94,7 @@ struct AuthPatternLockSettingsPage {
             clearTimeout(this.timeoutID)
           })
           .onPatternComplete((input: number[]) => {
-            // TODO：密码输入结束时触发该回调
+            this.onPatternComplete(input)
           })
       }
       .padding({ top: 140 })

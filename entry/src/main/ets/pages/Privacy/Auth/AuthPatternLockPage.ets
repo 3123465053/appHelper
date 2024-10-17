@@ -1,5 +1,7 @@
 import { router } from '@kit.ArkUI'
 import { PRIVACY_SETTINGS, PrivacySettings } from '../../../common/constants'
+import { encryptMD5 } from '../../../common/utils'
+import { userAuthManager } from '../../../manager'
 
 @Entry
 @Component
@@ -18,6 +20,57 @@ struct AuthPatternLockPage {
   private timeoutID: number = -1
   // 图形密码控制器
   private patternLockController: PatternLockController = new PatternLockController()
+
+  //设置错误提示
+  setErrorMessage(mes:string){
+    this.errorMessage=mes;
+    this.patternLockController.setChallengeResult(PatternLockChallengeResult.WRONG)
+  }
+
+  //清理错误提示
+  cleanErrorMessage(){
+    this.errorMessage='';
+    this.patternLockController.setChallengeResult(PatternLockChallengeResult.CORRECT)
+  }
+
+  //密码输入结束时调用
+  onPatternComplete(input:number[]){
+    //更新线条颜色时使用
+    this.inputPasswords=input
+
+    if(input.length<4){
+     this.setErrorMessage("输入密码长度不小于4位，请重新输入")
+    }
+    else{
+      //先清理错误信息
+      this.cleanErrorMessage()
+      if(this.privacySettings.patternPassword===encryptMD5(input.toString())){
+        router.pushUrl({url:"pages/Privacy/PrivacyIndexPage"})
+      }else{
+        this.setErrorMessage("密码错误，请重新输入")
+      }
+    }
+
+    this.timeoutID=setTimeout(()=>{
+      //清空界面
+      this.patternLockController.reset();
+      this.inputPasswords=[]
+    },800)
+  }
+
+  aboutToAppear(): void {
+  this.startUserAuth()
+  }
+
+  //生物识别认证
+  async startUserAuth(){
+    //先检查能力
+     if(userAuthManager.checkUserAuthSupport()){
+       //开启认证
+       await userAuthManager.startUserAuth()
+       //认证成功跳转主页
+       router.pushUrl({url:"pages/Privacy/PrivacyIndexPage"})}
+  }
 
   build() {
     Column() {
@@ -60,6 +113,7 @@ struct AuthPatternLockPage {
             })
             .onPatternComplete((input: number[]) => {
               // TODO：密码输入结束时触发该回调
+              this.onPatternComplete(input)
             })
 
           Row({ space: 20 }) {

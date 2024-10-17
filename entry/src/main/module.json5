@@ -69,6 +69,10 @@
         "name": "ohos.permission.MICROPHONE",
         "reason": "$string:permission_reason_microphone",
         "usedScene": {}
+      },
+      //生物识别权限
+      {
+        'name': 'ohos.permission.ACCESS_BIOMETRIC'
       }
 
     ],

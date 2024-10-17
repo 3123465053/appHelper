@@ -2,3 +2,4 @@
 export * from './ThemeManager'
 export * from './PermissionManager'
 export * from './CleanerManger'
+export * from './UserAuthManager'

@@ -1,4 +1,4 @@
-import { router } from '@kit.ArkUI'
+import { promptAction, router } from '@kit.ArkUI'
 import { PRIVACY_SETTINGS, PrivacySettings } from '../../common/constants'
 import { showDevelopingTips } from '../../common/dev'
 
@@ -119,7 +119,10 @@ struct HomeEntry {
 @Component
 struct HomeShortcut {
   // 监听 AppStorage 的数据变化，注意 @Watch 的书写位置
-  @StorageLink(PRIVACY_SETTINGS) privacySettings: PrivacySettings = {}
+  @StorageLink(PRIVACY_SETTINGS)@Watch("onPrivacySettingChange") privacySettings: PrivacySettings = {}
+  //@StorageLink双向同步
+  @StorageLink('isHidePrivacy') isHidePrivacy:boolean=false
+
   @State list: IconItem[] = [
     {
       title: '手机瘦身',
@@ -134,7 +137,9 @@ struct HomeShortcut {
     {
       title: '隐私空间',
       icon: $r('app.media.ic_home_shortcut_yskj'),
-      url: '/pages/Privacy/PrivacyIndexPage'
+      //有密码就跳转到校验界面
+      //没有就跳转到设置密码页面
+      url: this.privacySettings.patternPassword? '/pages/Privacy/Auth/AuthPatternLockPage':'/pages/Privacy/Auth/AuthPatternLockSettingsPage'
     },
     {
       title: '通讯录备份',
@@ -159,6 +164,38 @@ struct HomeShortcut {
       showDevelopingTips()
     } else {
       router.pushUrl({ url: item.url.slice(1) })
+    }
+  }
+
+  aboutToAppear(): void {
+  this.togglePrivacyEntry()  //根据存储的值 初始化UI(是显示隐私空间还是日历清理)
+  }
+
+  //当privacySettings.patternPassword 有变化时也要更新Url
+  onPrivacySettingChange(){
+    this.togglePrivacyEntry()
+  }
+
+  //长按切换隐私空间入口
+  togglePrivacyEntry(){
+    const privacyItem:IconItem= {
+      title: '隐私空间',
+      icon: $r('app.media.ic_home_shortcut_yskj'),
+      //有密码就跳转到校验界面
+      //没有就跳转到设置密码页面
+      url: this.privacySettings.patternPassword ? '/pages/Privacy/Auth/AuthPatternLockPage':'/pages/Privacy/Auth/AuthPatternLockSettingsPage'
+    }
+
+    const calenderItem:IconItem= {
+      title: '日历清理',
+      icon: $r('app.media.ic_home_shortcut_rlql'),
+      url: '/pages/Calendar/CalendarIndexPage'
+    }
+
+    if(this.isHidePrivacy){
+      this.list[2]=calenderItem
+    }else {
+      this.list[2]=privacyItem
     }
   }
 
@@ -190,6 +227,20 @@ struct HomeShortcut {
           .onClick(() => {
             this.openShortcutPage(item)
           })
+          .gesture(
+            //fingers手指数量 duration长按所需时间 repeat是否重复执行
+            LongPressGesture({fingers:1,duration:600,repeat:false})
+              .onAction(()=>{
+                if(index===2){
+                  this.isHidePrivacy=!this.isHidePrivacy
+                  this.togglePrivacyEntry()
+                }
+               // promptAction.showToast({message:"长按开始"})
+              })
+              .onActionEnd(()=>{
+               /// promptAction.showToast({message:'长按结束'})
+              })
+          )
         }
       })
     }
@@ -267,6 +318,7 @@ struct CommentTitle {
       .onClick(() => {
         router.pushUrl({ url: 'pages/Tools/ToolsIndexPage' })
       })
+
     }
     .width('100%')
     .padding({ top: 20, bottom: 20 })

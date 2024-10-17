@@ -7,7 +7,9 @@
   "author": "",
   "license": "",
   "dependencies": {
+    //格式化日期
     "dayjs": "^1.11.13",
+    //加密库
     "@ohos/crypto-js": "2.0.4-rc.1",
     "@wolfx/lodash": "^4.17.21-rc.2",
     "@ohos/axios": "^2.2.0"
