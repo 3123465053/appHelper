@@ -1,20 +1,40 @@
-import { router } from '@kit.ArkUI'
+import { promptAction, router } from '@kit.ArkUI'
 import dayjs from 'dayjs'
 import { EmptyTipsComp } from '../../../common/components'
+import { privacyNoteDB, PrivacyNoteDBInfo } from '../../../dababase/PrivacyNoteDB'
 
 // 隐私笔记
-interface NoteItem {
-  id: number | null
-  title: string
-  content: string
-  date_added: number
-}
+// interface NoteItem {
+//   id: number | null
+//   title: string
+//   content: string
+//   date_added: number
+// }
+
+//隐私笔记页面
+
 
 @Entry
 @Component
 struct NoteIndexPage {
   // 笔记列表
-  @State list: NoteItem[] = []
+  @State list: PrivacyNoteDBInfo[] = []
+
+  onPageShow(): void {
+    this.getList()
+  }
+
+  //查询数据
+  async getList(){
+    this.list=await privacyNoteDB.query()
+  }
+
+  //删除数据
+  async deleteData(id:number){
+    await privacyNoteDB.delete(id)
+    promptAction.showToast({message:"删除成功"})
+    this.getList()
+  }
 
   @Builder
   swipeActionEnd(id: number) {
@@ -26,6 +46,7 @@ struct NoteIndexPage {
         .backgroundColor('#FF5E5D')
         .onClick(() => {
           // TODO：删除
+          this.deleteData(id)
         })
     }
     .height('100%')
@@ -37,8 +58,10 @@ struct NoteIndexPage {
       Stack({ alignContent: Alignment.Bottom }) {
         if (this.list.length) {
           Column() {
+
             List() {
-              ForEach(this.list, (item: NoteItem) => {
+              //item JSON.stringify() 可以得到唯一标识就不使用第三个参数
+              ForEach(this.list, (item: PrivacyNoteDBInfo) => {
                 ListItem() {
                   Row() {
                     Column() {
@@ -73,12 +96,14 @@ struct NoteIndexPage {
                 .swipeAction({
                   end: {
                     builder: () => { this.swipeActionEnd(item.id) },
+                    //侧滑一定距离回调
                     onAction: () => {
                       animateTo({ duration: 1000 }, () => {
                         // TODO：侧滑删除
+                        this.deleteData(item.id)
                       })
                     },
-                    actionAreaDistance: 56,
+                    actionAreaDistance: 56,  //侧滑到一定的距离
                   },
                   edgeEffect: SwipeEdgeEffect.None
                 })

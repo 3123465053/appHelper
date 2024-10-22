@@ -1,4 +1,7 @@
 // 页面参数
+import { privacyNoteDB } from '../../../dababase/PrivacyNoteDB'
+import { promptAction, router } from '@kit.ArkUI'
+
 interface RouterParams {
   id?: number
 }
@@ -13,6 +16,70 @@ struct NoteDetailPage {
   // 页面参数
   @State routerParams: RouterParams = {}
 
+  aboutToAppear(): void {
+   const params=router.getParams() as RouterParams
+    if(params){
+      this.routerParams=params
+      this.getDetail()
+    }
+  }
+
+  //获取详情
+  async getDetail(){
+    const list=await privacyNoteDB.query(this.routerParams.id)
+    const detail=list[0]
+    if(detail){
+      this.title=detail.title;
+      this.content=detail.content
+    }
+  }
+
+  //保存
+  async onSubmit(){
+    if(this.routerParams.id){
+      await privacyNoteDB.update({
+        id:this.routerParams.id,
+        title:this.title,
+        content:this.content,
+        date_added:Date.now()
+      })
+    }else {
+      const id=await privacyNoteDB.insert({
+        id:null,
+        title:this.title,
+        content:this.content,
+        date_added:Date.now()
+      })
+    }
+    promptAction.showToast({message:"保存成功"})
+    router.back()
+  }
+
+  //用户返回时触发（生命周期函数）
+  onBackPress(): boolean | void {
+    //编辑笔记时不阻止回传
+    if(this.routerParams.id){
+      return false
+    }
+
+   promptAction.showDialog({
+     title:"温馨提示",
+     message:"输入的内容还没有保存，是否放弃?",
+     buttons:[
+       {text:"取消",color:$r('app.color.font_sub')},
+       {text:"确定",color:$r('app.color.brand')}
+     ]
+   }).then((res)=>{
+     if(res.index===1){
+       router.back()
+     }
+   })
+
+    //阻断默认返回的行为
+    return true;
+  }
+
+
   @Builder
   NavigationMenus() {
     Row() {
@@ -22,6 +89,7 @@ struct NoteDetailPage {
         .enabled(this.title.trim() !== '')
         .onClick(() => {
           // TODO：保存(新增/修改)
+          this.onSubmit()
         })
     }
     .height('100%')
